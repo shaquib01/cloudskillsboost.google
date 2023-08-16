@@ -1,0 +1,23 @@
+🔍 Task 1: Clean Your Training Data
+
+Clean the data in historical_taxi_rides_raw.
+Create a copy named taxi_training_data_474 in the same dataset.
+Ensure trip_distance is greater than 4.
+Remove rows with fare_amount less than $2.0.
+Validate reasonable latitudes and longitudes.
+Ensure passenger_count is greater than 4.
+Include tolls_amount and fare_amount in fare_amount_138.
+Sample the dataset to less than 1 Million rows.
+Copy only relevant fields from report_prediction_data.
+⚙️ Task 2: Create a BigQuery ML Model
+
+Build a model predicting fare_amount_138.
+Name the model fare_model_551.
+Achieve an RMSE of 10 or less.
+Use TRANSFORM() for data transformations.
+Utilize ST_distance() and ST_GeogPoint() GIS functions.
+📊 Task 3: Perform Batch Prediction on New Data
+
+Predict fare_amount_138 using ML.PREDICT.
+Store results in 2015_fare_amount_predictions.
+Use data from taxirides.report_prediction_data.
