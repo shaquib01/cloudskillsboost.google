@@ -40,7 +40,7 @@ By joining the Google Arcade 2023 Program, you can expect the following benefits
 
 Enrolling in the Google Arcade 2023 Program is easy:
 
-1. **Visit the Program Website:** Go to the official Google Arcade 2023 Program website (link will be provided) for detailed information and enrollment instructions.
+1. **Visit the Program Website:** Go to the official [Google Arcade 2023 Program website](https://www.google.com/arcade2023) for detailed information and enrollment instructions.
 
 2. **Complete the Application:** Fill out the application form with your details, including your background, interests, and why you want to participate in the program.
 
@@ -62,6 +62,10 @@ As a participant in the Google Arcade 2023 Program, you'll receive exclusive swa
 
 Participants who successfully complete program milestones and projects will have the opportunity to earn Google Skill Badges. These badges are a recognition of your achievements and skills gained during the program and can be a valuable addition to your portfolio.
 
+For more information and any further queries, please feel free to reach out to [Shaquib Nawaid](https://www.linkedin.com/in/shaquibnawaid/).
+
+If you have additional questions or need assistance, you can also contact us via email at [shaquibnwaid01@gmail.com](mailto:shaquibnwaid01@gmail.com).
+
 Join us in the Google Arcade 2023 Program and embark on a journey to unlock your game development potential with Google's support and resources. Let's make awesome games together!
 
-For more details and enrollment information, please visit the [Google Arcade 2023 Program Website](https://www.google.com/arcade2023).
+[Visit the Google Arcade 2023 Program Website](https://www.google.com/arcade2023) to get started!
