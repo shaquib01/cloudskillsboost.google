@@ -21,6 +21,7 @@ A repository of raw data and tend to hold ‘back up’ data
 ```
 Databases efficiently ingest large amounts of real-time data, while data warehouses rapidly analyze multi-dimensional datasets.
 ```
+
 ```
 BigQuery.
 ```
