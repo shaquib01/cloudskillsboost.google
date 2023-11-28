@@ -9,11 +9,15 @@ A prompt is a short piece of text that is given to the large language model as i
 ```
 A foundation model is a large AI model pretrained on a vast quantity of data that was "designed to be adapted” (or fine-tuned) to a wide range of downstream tasks, such as sentiment analysis, image captioning, and object recognition
 ```
-
+```
 Generative AI is a type of artificial intelligence (AI) that can create new content, such as text, images, audio, and video. It does this by learning from existing data and then using that knowledge to generate new and unique outputs.
-
+```
+```
 The model is not given enough context.
-
+```
+```
 The model is trained on noisy or dirty data.
-
+```
+```
 The model is not trained on enough data
+```
