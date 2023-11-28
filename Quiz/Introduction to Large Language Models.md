@@ -16,5 +16,6 @@ They can be expensive to train.
 They can be biased.
 ```
 
+```
 LLMs can be used for many tasks, including:1) Writing2) Translating3) Coding4) Answering questions5) Summarizing text6) Generating creativecontent
-
+```
