@@ -1,14 +1,15 @@
 # QUIZ
 1. Benefits of Prompt Tuning:
-
-```Enables large language models (LLMs) to adapt to a wide range of tasks
+```
+Enables large language models (LLMs) to adapt to a wide range of tasks
 ```
 ```
 Helps large language models (LLMs) generate more accurate responses
 ```
 2. Performance of LLMs:
 
-```False
+```
+False
 ```
 (performance doesn't always improve with just more data and parameters)
 
