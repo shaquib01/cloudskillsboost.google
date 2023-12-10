@@ -8,3 +8,16 @@ sudo chmod +x quicklabgsp122.sh
 
 ./quicklabgsp122.sh
 ```
+##  Choose [2] Option (create new account)
+ ## click on the link come in the last of the command 
+ and authorised it 
+scroll down 
+copy authroistion key 
+back to terminal and paste the key 
+
+## now [1] choose your project id 
+and Done
+
+```
+https://www.youtube.com/watch?v=E81wDnTC6cE&t=35s
+```
