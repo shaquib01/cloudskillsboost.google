@@ -1,3 +1,6 @@
+```
+https://www.youtube.com/watch?v=aOVcLqBjzLQ
+```
 ## Run in cloudshell
 ```cmd
 git clone https://github.com/GoogleCloudPlatform/training-data-analyst
