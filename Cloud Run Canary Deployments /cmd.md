@@ -1,4 +1,4 @@
-Cloud Run Canary Deployments
+# Cloud Run Canary Deployments
 
 ```
 sudo chmod +x quicklabgsp1078.sh 
