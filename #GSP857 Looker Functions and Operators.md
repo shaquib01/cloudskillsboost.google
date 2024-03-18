@@ -1,3 +1,4 @@
+## FOR FEW CHANGES WATCH VIDEO
 ```
 https://www.youtube.com/watch?v=dOzjipAOmZY
 ```
@@ -13,6 +14,9 @@ explore: +flights {
     }
   }
 ```
+```
+Flight Count by Departure Week and Distance Tier
+```
 
 ## TASK 2:-
 ```
@@ -25,7 +29,9 @@ explore: +flights {
     }
   }
 ```
-
+```
+Percent of Flights Cancelled by State in 2000
+```
 ## TASK 3:-
 ```
 # Place in `faa` model
@@ -37,6 +43,10 @@ explore: +flights {
     }
 }
 ```
+```
+Percent of Flights Cancelled by Aircraft Origin 2004
+```
+
 
 ## TASK 4:-
 ```
@@ -47,6 +57,9 @@ explore: +flights {
       measures: [total_distance]
     }
 }
+```
+```
+Percent of Total Distance Flown by Carrier
 ```
 
 ## TASK 5:-
@@ -59,4 +72,7 @@ explore: +flights {
       filters: [flights.depart_date: "after 2000/01/01"]
     }
 }
+```
+```
+YoY Percent Change in Flights flown by Distance, 2000-Present
 ```
