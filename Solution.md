@@ -21,8 +21,9 @@ WHERE
 ```
 
 ## TASK 2
-### CREATE OR REPLACE MODEL taxirides.fare_model_551
+### CREATE OR REPLACE MODEL 
 ```
+taxirides.fare_model_551
 TRANSFORM(
   * EXCEPT(pickup_datetime)
 
