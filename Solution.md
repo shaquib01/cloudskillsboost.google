@@ -1,6 +1,7 @@
-TASK 1
-CREATE OR REPLACE TABLE
-  taxirides.taxi_training_data_474 AS 
+## TASK 1
+### CREATE OR REPLACE TABLE
+  ```
+taxirides.taxi_training_data_474 AS 
 SELECT
   (tolls_amount + fare_amount) AS fare_amount_138,
   pickup_datetime,
@@ -17,9 +18,11 @@ WHERE
   AND fare_amount >= 2.0
   AND pickup_longitude > -78
   AND pickup_longitude < -70
+```
 
-TASK 2
-CREATE OR REPLACE MODEL taxirides.fare_model_551
+## TASK 2
+### CREATE OR REPLACE MODEL taxirides.fare_model_551
+```
 TRANSFORM(
   * EXCEPT(pickup_datetime)
 
@@ -32,10 +35,13 @@ AS
 
 SELECT * FROM taxirides.taxi_training_data_474
 
-
-TASK 3
+```
+### TASK 3
+```
 CREATE OR REPLACE TABLE taxirides.2015_fare_amount_predictions
   AS
 SELECT * FROM ML.PREDICT(MODEL taxirides.fare_model_551,(
   SELECT * FROM taxirides.report_prediction_data)
 )
+
+```
