@@ -5,6 +5,7 @@
 ## REPLACE all the file 
 ```
 
+
 view: users {
   sql_table_name: `cloud-training-demos.looker_ecomm.users`
     ;;
@@ -76,7 +77,8 @@ view: users {
     type: string
     sql: ${TABLE}.gender ;;
   }
-` dimension: last_name {
+
+  dimension: last_name {
     type: string
     sql: ${TABLE}.last_name ;;
   }
@@ -123,6 +125,11 @@ view: users {
     drill_fields: [id, last_name, first_name, events.count, order_items.count]
   }
 }
+
+
+
+
+
 ```
 
 
