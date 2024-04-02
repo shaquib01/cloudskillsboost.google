@@ -5,3 +5,4 @@ sudo chmod +x gsp297.sh
 
 ./gsp297.sh 
 ````
+>Press y
