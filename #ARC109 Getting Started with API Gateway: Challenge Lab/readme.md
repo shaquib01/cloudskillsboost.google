@@ -1,5 +1,5 @@
 ```
-curl -LO https://raw.githubusercontent.com/quiccklabs/Labs_solutions/master/Getting%20Started%20with%20API%20Gateway%20Challenge%20Lab/quicklabarc109.sh
+curl -LO https://raw.githubusercontent.com/shaquib01/cloudskillsboost.google/master/%23ARC109%20Getting%20Started%20with%20API%20Gateway%3A%20Challenge%20Lab/arc109.sh
 
 chmod +x arc109.sh
 
