@@ -15,10 +15,10 @@ export SECOND_USER=
 ```
 ```
 
-curl -LO raw.githubusercontent.com/quiccklabs/Labs_solutions/master/Monitor%20and%20Manage%20Google%20Cloud%20Resources%20Challenge%20Lab/quicklabarc101.sh
+curl -LO https://raw.githubusercontent.com/shaquib01/cloudskillsboost.google/master/%23ARC101%20Monitor%20and%20Manage%20Google%20Cloud%20Resources%3A%20Challenge%20Lab/arc101.sh
 
 
-sudo chmod +x quicklabarc101.sh
+sudo chmod +x arc101.sh
 
-./quicklabarc101.sh
+./arc101.sh
 ```
