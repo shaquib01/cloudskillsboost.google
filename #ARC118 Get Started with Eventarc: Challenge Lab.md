@@ -1,3 +1,4 @@
+# Get Started with Eventarc: Challenge Lab
 ```
 export REGION=
 ```
