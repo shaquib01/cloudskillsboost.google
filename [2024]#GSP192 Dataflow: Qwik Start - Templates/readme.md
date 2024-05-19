@@ -3,9 +3,8 @@
 export REGION=
 ```
 ```
-curl -LO raw.githubusercontent.com/quiccklabs/Labs_solutions/master/Dataflow%20Qwik%20Start%20Templates/quicklabgsp192.sh
+curl -LO https://raw.githubusercontent.com/shaquib01/cloudskillsboost.google/master/%5B2024%5D%23GSP192%20Dataflow%3A%20Qwik%20Start%20-%20Templates/gsp192.sh
+sudo chmod +x bgsp192.sh
 
-sudo chmod +x quicklabgsp192.sh
-
-./quicklabgsp192.sh
+./gsp192.sh
 ```
