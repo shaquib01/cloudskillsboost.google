@@ -2,21 +2,6 @@
 
 ### Question 1
 ```
-A relational database
-```
-
-### Question 2
-```
-Structured data
-```
-
-### Question 3
-```
-Through machine learning, with every click that the user makes, their website experience becomes increasingly personalized.
-```
-
-### Question 4
-```
 Analyzing social media posts to identify sentiment toward a brand
 ```
 
