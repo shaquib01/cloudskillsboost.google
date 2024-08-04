@@ -1,8 +1,0 @@
-Vision API
-Contact Center AI
-Build and evaluate machine learning models in BigQuery by using SQL.
-Vision API
-Custom training
-AutoML
-Tensor Processing Unit (TPU)
-Document AI
