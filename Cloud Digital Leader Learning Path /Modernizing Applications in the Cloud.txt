@@ -1,0 +1,6 @@
+Serverless computing
+Reliability
+Software layers above the operating system level
+Containers
+Kubernetes
+Lift and shift
