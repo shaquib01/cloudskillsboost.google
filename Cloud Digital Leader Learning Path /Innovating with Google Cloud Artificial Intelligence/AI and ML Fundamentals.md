@@ -1,61 +1,61 @@
-## Cloud Computing Concepts
+## AI, Machine Learning, and Data
 
 ### Question 1
-What term describes a set of instructions that lets different software programs communicate with each other?
+Which technology relies on models to analyze large amounts of data, learn from the insights, and then make predictions and informed decisions?
 ```
-Application programming interface
+Machine learning
 ```
 
 ### Question 2
-What term is commonly used to describe a rehost migration strategy for an organization that runs specialized legacy applications that aren’t compatible with cloud-native applications?
+How do data analytics and business intelligence differ from AI and ML?
 ```
-Lift and shift
+Data analytics and business intelligence identify trends from historical data, whereas AI and ML use data to make decisions for future business.
 ```
 
 ### Question 3
-What’s the name of Google Cloud’s production-ready platform for running Kubernetes applications across multiple cloud environments?
+Which use case demonstrates ML’s ability to process natural language?
 ```
-Google Kubernetes Engine
+Identifying the topic and sentiment of customer email messages so that they can be routed to the relevant department.
 ```
 
 ### Question 4
-In modern cloud application development, what name is given to independently deployable, scalable, and maintainable components that can be used to build a wide range of applications?
+Google applies generative AI to products like Google Workspace, but what is generative AI?
 ```
-Microservices
+A type of artificial intelligence that can produce new content, including text, images, audio, and synthetic data.
 ```
 
 ### Question 5
-What name is given to an environment where an organization uses more than one public cloud provider as part of its architecture?
+Google's AI principles are a set of guiding values that help develop and use artificial intelligence responsibly. Which of these is one of Google’s AI principles?
 ```
-Multicloud
+AI should be socially beneficial.
 ```
 
 ### Question 6
-Which is a fully managed cloud infrastructure solution that lets organizations run their Oracle workloads on dedicated servers in the cloud?
+Which option refers to the use of technologies to build machines and computers that can mimic cognitive functions associated with human intelligence?
 ```
-Google Cloud VMware Engine
+Artificial intelligence
 ```
 
 ### Question 7
-What is the name of Google Cloud's API management service that can operate APIs with enhanced scale, security, and automation?
+You’re watching a video on YouTube and are shown a list of videos that YouTube thinks you are interested in. What ML solution powers this feature?
 ```
-Apigee
+Personalized recommendations
 ```
 
 ### Question 8
-What is one way that organizations can create new revenue streams through APIs?
+Artificial intelligence is best suited for replacing or simplifying rule-based systems. Which is an example of this in action?
 ```
-By charging developers to access their APIs
+Implementing AI to develop a new product or service that has never been seen before.
 ```
 
 ### Question 9
-In modern application development, which is responsible for the day-to-day management of cloud-based infrastructure, such as patching, upgrades, and monitoring?
+What does the consistency dimension refer to when data quality is being measured?
 ```
-Managed services
+Whether the data is uniform and doesn’t contain any contradictory information.
 ```
 
 ### Question 10
-What name is given to an environment that comprises some combination of on-premises or private cloud infrastructure and public cloud services?
+Which dimension for measuring data quality means that the data conforms to a set of predefined standards and definitions such as type and format?
 ```
-Hybrid cloud
+Validity
 ```
