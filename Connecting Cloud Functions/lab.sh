@@ -1,15 +1,17 @@
 
 
 
+gcloud auth list
 
-PROJECT_ID=$(gcloud config get-value project)
+export PROJECT_ID=$(gcloud config get-value project)
+export PROJECT_ID=$DEVSHELL_PROJECT_ID
 
+gcloud config set compute/zone $ZONE
+export REGION="${ZONE%-*}"
+gcloud config set compute/region $REGION
 
-PROJECT_NUMBER=$(gcloud projects list \
- --filter="project_id:$PROJECT_ID" \
- --format='value(project_number)')
-
- gcloud config set functions/region $REGION
+export PROJECT_NUMBER=$(gcloud projects describe $DEVSHELL_PROJECT_ID --format='value(projectNumber)')
+gcloud config set project $DEVSHELL_PROJECT_ID
 
 gcloud services enable \
   artifactregistry.googleapis.com \
@@ -18,320 +20,321 @@ gcloud services enable \
   eventarc.googleapis.com \
   run.googleapis.com \
   logging.googleapis.com \
-  storage.googleapis.com \
-  pubsub.googleapis.com
+  pubsub.googleapis.com \
+  redis.googleapis.com \
+  vpcaccess.googleapis.com
+
+
+sleep 30
+
+
+REDIS_INSTANCE=customerdb
+
+gcloud redis instances create $REDIS_INSTANCE \
+ --size=2 --region=$REGION \
+ --redis-version=redis_6_x
+ 
+gcloud redis instances describe $REDIS_INSTANCE --region=$REGION
+
+REDIS_IP=$(gcloud redis instances describe $REDIS_INSTANCE --region=$REGION --format="value(host)"); echo $REDIS_IP
+
+REDIS_PORT=$(gcloud redis instances describe $REDIS_INSTANCE --region=$REGION --format="value(port)"); echo $REDIS_PORT
+
+
+gcloud compute networks vpc-access connectors create test-connector --region=$REGION --machine-type=e2-micro --network=default --range=10.8.0.0/28 --max-instances=10 --min-instances=2
 
 
 
-#Need to do manually
+gcloud compute networks vpc-access connectors \
+  describe test-connector \
+  --region $REGION
 
 
-gcloud storage cp -R gs://cloud-training/CBL493/firestore_functions .
+TOPIC=add_redis
 
-cd firestore_functions
+gcloud pubsub topics create $TOPIC
 
 
-cat > index.js <<'EOF_END'
- /**
-  * Cloud Event Function triggered by a change to a Firestore document.
-  */
- const functions = require('@google-cloud/functions-framework');
- const protobuf = require('protobufjs');
+mkdir ~/redis-pubsub && cd $_
+touch main.py && touch requirements.txt
 
- functions.cloudEvent('newCustomer', async cloudEvent => {
-   console.log(`Function triggered by event on: ${cloudEvent.source}`);
-   console.log(`Event type: ${cloudEvent.type}`);
 
-   console.log('Loading protos...');
-   const root = await protobuf.load('data.proto');
-   const DocumentEventData = root.lookupType('google.events.cloud.firestore.v1.DocumentEventData');
+cat > main.py <<'EOF_CP'
+import os
+import base64
+import json
+import redis
+import functions_framework
 
-   console.log('Decoding data...');
-   const firestoreReceived = DocumentEventData.decode(cloudEvent.data);
+redis_host = os.environ.get('REDISHOST', 'localhost')
+redis_port = int(os.environ.get('REDISPORT', 6379))
+redis_client = redis.StrictRedis(host=redis_host, port=redis_port)
 
-   console.log('\nNew document:');
-   console.log(JSON.stringify(firestoreReceived.value, null, 2));
- });
+# Triggered from a message on a Pub/Sub topic.
+@functions_framework.cloud_event
+def addToRedis(cloud_event):
+    # The Pub/Sub message data is stored as a base64-encoded string in the cloud_event.data property
+    # The expected value should be a JSON string.
+    json_data_str = base64.b64decode(cloud_event.data["message"]["data"]).decode()
+    json_payload = json.loads(json_data_str)
+    response_data = ""
+    if json_payload and 'id' in json_payload:
+        id = json_payload['id']
+        data = redis_client.set(id, json_data_str)
+        response_data = redis_client.get(id)
+        print(f"Added data to Redis: {response_data}")
+    else:
+        print("Message is invalid, or missing an 'id' attribute")
+EOF_CP
+
+
+cat > requirements.txt <<EOF_CP
+functions-framework==3.2.0
+redis==4.3.4
+EOF_CP
+
+
+deploy_function() {
+    gcloud functions deploy python-pubsub-function \
+    --runtime=python310 \
+    --region=$REGION \
+    --source=. \
+    --entry-point=addToRedis \
+    --trigger-topic=$TOPIC \
+    --vpc-connector projects/$PROJECT_ID/locations/$REGION/connectors/test-connector \
+    --set-env-vars REDISHOST=$REDIS_IP,REDISPORT=$REDIS_PORT
+}
+
+deploy_success=false
+
+while [ "$deploy_success" = false ]; do
+    if deploy_function; then
+        echo "Function deployed successfully."
+        deploy_success=true
+    else
+        echo "Retrying in 30 seconds, subscribe to techcps[https://www.youtube.com/@techcps]"
+        sleep 30
+    fi
+done
+
+
+gcloud pubsub topics publish $TOPIC --message='{"id": 1234, "firstName": "Lucas" ,"lastName": "Sherman", "Phone": "555-555-5555"}'
+
+sleep 10
+
+
+mkdir ~/redis-http && cd $_
+touch main.py && touch requirements.txt
+
+
+cat > main.py <<'EOF_CP'
+import os
+import redis
+from flask import request
+import functions_framework
+
+redis_host = os.environ.get('REDISHOST', 'localhost')
+redis_port = int(os.environ.get('REDISPORT', 6379))
+redis_client = redis.StrictRedis(host=redis_host, port=redis_port)
+
+@functions_framework.http
+def getFromRedis(request):
+    response_data = ""
+    if request.method == 'GET':
+        id = request.args.get('id')
+        try:
+            response_data = redis_client.get(id)
+        except RuntimeError:
+            response_data = ""
+        if response_data is None:
+            response_data = ""
+    return response_data
+EOF_CP
+
+
+cat > requirements.txt <<EOF_CP
+functions-framework==3.2.0
+redis==4.3.4
+EOF_CP
+
+
+deploy_function() {
+gcloud functions deploy http-get-redis \
+--gen2 \
+--runtime python310 \
+--entry-point getFromRedis \
+--source . \
+--region $REGION \
+--trigger-http \
+--timeout 600s \
+--max-instances 1 \
+--vpc-connector projects/$PROJECT_ID/locations/$REGION/connectors/test-connector \
+--set-env-vars REDISHOST=$REDIS_IP,REDISPORT=$REDIS_PORT \
+--no-allow-unauthenticated
+}
+
+deploy_success=false
+
+while [ "$deploy_success" = false ]; do
+    if deploy_function; then
+        echo "Function deployed successfully."
+        deploy_success=true
+    else
+        echo "Retrying in 10 seconds, subscribe to techcps [https://www.youtube.com/@techcps]"
+        sleep 10
+    fi
+done
+
+
+FUNCTION_URI=$(gcloud functions describe http-get-redis --gen2 --region $REGION --format "value(serviceConfig.uri)"); echo $FUNCTION_URI
+
+curl -H "Authorization: bearer $(gcloud auth print-identity-token)" "${FUNCTION_URI}?id=1234"
+
+gsutil cp gs://cloud-training/CBL492/startup.sh .
+
+cat startup.sh
+
+gcloud compute instances create webserver-vm \
+--image-project=debian-cloud \
+--image-family=debian-11 \
+--metadata-from-file=startup-script=./startup.sh \
+--machine-type e2-standard-2 \
+--tags=http-server \
+--scopes=https://www.googleapis.com/auth/cloud-platform \
+--zone $ZONE
+
+
+gcloud compute --project=$PROJECT_ID \
+ firewall-rules create default-allow-http \
+ --direction=INGRESS \
+ --priority=1000 \
+ --network=default \
+ --action=ALLOW \
+ --rules=tcp:80 \
+ --source-ranges=0.0.0.0/0 \
+ --target-tags=http-server
+
+
+sleep 30
+
+
+VM_INT_IP=$(gcloud compute instances describe webserver-vm --format='get(networkInterfaces[0].networkIP)' --zone $ZONE); echo $VM_INT_IP
+
+VM_EXT_IP=$(gcloud compute instances describe webserver-vm --format='get(networkInterfaces[0].accessConfigs[0].natIP)' --zone $ZONE); echo $VM_EXT_IP
+
+
+
+mkdir ~/vm-http && cd $_
+touch main.py && touch requirements.txt
+
+
+cat > main.py <<'EOF_CP'
+import functions_framework
+import requests
+
+@functions_framework.http
+def connectVM(request):
+    resp_text = ""
+    if request.method == 'GET':
+        ip = request.args.get('ip')
+        try:
+            response_data = requests.get(f"http://{ip}")
+            resp_text = response_data.text
+        except RuntimeError:
+            print ("Error while connecting to VM")
+    return resp_text
+EOF_CP
+
+
+
+cat > requirements.txt <<EOF_END
+functions-framework==3.2.0
+Werkzeug==2.3.7
+flask==2.1.3
+requests==2.28.1
 EOF_END
 
 
-cat > package.json <<'EOF_END'
-{
-    "name": "firestore_functions",
-    "version": "0.0.1",
-    "main": "index.js",
-    "dependencies": {
-      "@google-cloud/functions-framework": "^3.1.3",
-      "protobufjs": "^7.2.2",
-      "@google-cloud/firestore": "^6.0.0"
-    }
-   }
-EOF_END
+
+deploy_function() {
+gcloud functions deploy vm-connector \
+ --runtime python310 \
+ --entry-point connectVM \
+ --source . \
+ --region $REGION \
+ --trigger-http \
+ --timeout 10s \
+ --max-instances 1 \
+ --no-allow-unauthenticated
+}
+
+deploy_success=false
+
+while [ "$deploy_success" = false ]; do
+    if deploy_function; then
+        echo "Function deployed successfully."
+        deploy_success=true
+    else
+        echo "Retrying in 10 seconds, subscribe to techcps [https://www.youtube.com/@techcps]"
+        sleep 10
+    fi
+done
 
 
-SERVICE_ACCOUNT=service-$PROJECT_NUMBER@gcf-admin-robot.iam.gserviceaccount.com
+FUNCTION_URI=$(gcloud functions describe vm-connector --region $REGION --format='value(httpsTrigger.url)'); echo $FUNCTION_URI
 
-gcloud projects add-iam-policy-binding $PROJECT_ID --member serviceAccount:$SERVICE_ACCOUNT --role roles/artifactregistry.reader
+curl -H "Authorization: bearer $(gcloud auth print-identity-token)" "${FUNCTION_URI}?ip=$VM_INT_IP"
+
+
+curl -H "Authorization: bearer $(gcloud auth print-identity-token)" "${FUNCTION_URI}?ip=$VM_EXT_IP"
+
 
 gcloud services disable cloudfunctions.googleapis.com
 
 gcloud services enable cloudfunctions.googleapis.com
 
-gcloud projects add-iam-policy-binding $PROJECT_ID --member serviceAccount:$SERVICE_ACCOUNT --role roles/artifactregistry.reader
+
+sleep 30
 
 
+cd ~
+cd vm-http
 
+export PROJECT_NUMBER=$(gcloud projects describe $DEVSHELL_PROJECT_ID --format='value(projectNumber)')
+export PROJECT_ID=$(gcloud config get-value project)
 
-
-# Your existing deployment command
 deploy_function() {
-gcloud functions deploy newCustomer \
---gen2 \
---runtime=nodejs20 \
---region=$REGION \
---trigger-location=$REGION \
---source=. \
---entry-point=newCustomer \
---trigger-event-filters=type=google.cloud.firestore.document.v1.created \
---trigger-event-filters=database='(default)' \
---trigger-event-filters-path-pattern=document='customers/{name}'
+    gcloud functions deploy vm-connector \
+        --runtime python310 \
+        --entry-point connectVM \
+        --source . \
+        --region $REGION \
+        --trigger-http \
+        --timeout 10s \
+        --max-instances 1 \
+        --no-allow-unauthenticated \
+        --vpc-connector projects/$PROJECT_ID/locations/$REGION/connectors/test-connector \
+        --service-account "$PROJECT_NUMBER-compute@developer.gserviceaccount.com"
 }
 
-# Variables
-SERVICE_NAME="newCustomer"
+deploy_success=false
 
-# Loop until the Cloud Function is deployed
-while true; do
-  # Run the deployment command
-  deploy_function
+export SERVICE_NAME="vm-connector"
 
-  # Check if Cloud Function is deployed
-  if gcloud functions describe $SERVICE_NAME --region $REGION &> /dev/null; then
-    echo "Cloud Function is deployed. Exiting the loop."
-    break
-  else
-    echo "Waiting for Cloud Function to be deployed..."
-    echo "Meantime Subscribe to Quicklab[https://www.youtube.com/@quick_lab]."
-    sleep 10
-  fi
+while [ "$deploy_success" = false ]; do
+    deploy_function
+    if gcloud functions describe $SERVICE_NAME --region=$REGION &> /dev/null; then
+        echo "Function deployed successfully."
+        deploy_success=true
+    else
+        echo "Retrying in 10 seconds, subscribe to techcps [https://www.youtube.com/@techcps]"
+        sleep 10
+    fi
 done
 
 
+curl -H "Authorization: bearer $(gcloud auth print-identity-token)" "${FUNCTION_URI}?ip=$VM_INT_IP"
 
 
-#TASK 4
-
-
-
-cat > index.js <<'EOF_END'
- /**
-  * Cloud Event Function triggered by a change to a Firestore document.
-  */
- const functions = require('@google-cloud/functions-framework');
- const protobuf = require('protobufjs');
-
- functions.cloudEvent('newCustomer', async cloudEvent => {
-   console.log(`Function triggered by event on: ${cloudEvent.source}`);
-   console.log(`Event type: ${cloudEvent.type}`);
-
-   console.log('Loading protos...');
-   const root = await protobuf.load('data.proto');
-   const DocumentEventData = root.lookupType('google.events.cloud.firestore.v1.DocumentEventData');
-
-   console.log('Decoding data...');
-   const firestoreReceived = DocumentEventData.decode(cloudEvent.data);
-
-   console.log('\nNew document:');
-   console.log(JSON.stringify(firestoreReceived.value, null, 2));
- });
-
-const Firestore = require('@google-cloud/firestore');
-const firestore = new Firestore({
-  projectId: process.env.GOOGLE_CLOUD_PROJECT,
-});
-
-functions.cloudEvent('updateCustomer', async cloudEvent => {
-  console.log('Loading protos...');
-  const root = await protobuf.load('data.proto');
-  const DocumentEventData = root.lookupType(
-   'google.events.cloud.firestore.v1.DocumentEventData'
-  );
-
-  console.log('Decoding data...');
-  const firestoreReceived = DocumentEventData.decode(cloudEvent.data);
-
-  const resource = firestoreReceived.value.name;
-  const affectedDoc = firestore.doc(resource.split('/documents/')[1]);
-
-  // Fullname already exists, so don't update again to avoid infinite loop.
-  if (firestoreReceived.value.fields.hasOwnProperty('fullname')) {
-    console.log('Fullname is already present in document.');
-    return;
-  }
-
-  if (firestoreReceived.value.fields.hasOwnProperty('lastname')) {
-    const lname = firestoreReceived.value.fields.lastname.stringValue;
-    const fname = firestoreReceived.value.fields.firstname.stringValue;
-    const fullname = `${fname} ${lname}`
-    console.log(`Adding fullname --> ${fullname}`);
-    await affectedDoc.update({
-     fullname: fullname
-    });
-  }
-});
-EOF_END
-
-
-deploy_function() {
-gcloud functions deploy updateCustomer \
---gen2 \
---runtime=nodejs20 \
---region=$REGION \
---trigger-location=$REGION \
---source=. \
---entry-point=updateCustomer \
---trigger-event-filters=type=google.cloud.firestore.document.v1.updated \
---trigger-event-filters=database='(default)' \
---trigger-event-filters-path-pattern=document='customers/{name}'
-}
-
-
-# Variables
-SERVICE_NAME="updateCustomer"
-
-# Loop until the Cloud Function is deployed
-while true; do
-  # Run the deployment command
-  deploy_function
-
-  # Check if Cloud Function is deployed
-  if gcloud functions describe $SERVICE_NAME --region $REGION &> /dev/null; then
-    echo "Cloud Function is deployed. Exiting the loop."
-    break
-  else
-    echo "Waiting for Cloud Function to be deployed..."
-    echo "Meantime Subscribe to Quicklab[https://www.youtube.com/@quick_lab]."
-    sleep 10
-  fi
-done
-
-
-
-
-
-#TASK 5
-
-
-
-gcloud services enable secretmanager.googleapis.com
-
-echo -n "secret_api_key" | gcloud secrets create api-cred --replication-policy="automatic" --data-file=-
-
-gcloud secrets add-iam-policy-binding api-cred --member=serviceAccount:$PROJECT_NUMBER-compute@developer.gserviceaccount.com --project=$PROJECT_ID --role='roles/secretmanager.secretAccessor'
-
-
-
-
-
-cat > index.js <<'EOF_END'
- /**
-  * Cloud Event Function triggered by a change to a Firestore document.
-  */
- const functions = require('@google-cloud/functions-framework');
- const protobuf = require('protobufjs');
-
- functions.cloudEvent('newCustomer', async cloudEvent => {
-   console.log(`Function triggered by event on: ${cloudEvent.source}`);
-   console.log(`Event type: ${cloudEvent.type}`);
-
-   console.log('Loading protos...');
-   const root = await protobuf.load('data.proto');
-   const DocumentEventData = root.lookupType('google.events.cloud.firestore.v1.DocumentEventData');
-
-   console.log('Decoding data...');
-   const firestoreReceived = DocumentEventData.decode(cloudEvent.data);
-
-   console.log('\nNew document:');
-   console.log(JSON.stringify(firestoreReceived.value, null, 2));
- });
+gcloud pubsub topics publish $TOPIC --message='{"id": 1234, "firstName": "Lucas" ,"lastName": "Sherman", "Phone": "555-555-5555"}'
  
-const Firestore = require('@google-cloud/firestore');
-const firestore = new Firestore({
-  projectId: process.env.GOOGLE_CLOUD_PROJECT,
-});
-
-functions.cloudEvent('updateCustomer', async cloudEvent => {
-  console.log('Loading protos...');
-  const root = await protobuf.load('data.proto');
-  const DocumentEventData = root.lookupType(
-   'google.events.cloud.firestore.v1.DocumentEventData'
-  );
-
-  console.log('Decoding data...');
-  const firestoreReceived = DocumentEventData.decode(cloudEvent.data);
-
-  const resource = firestoreReceived.value.name;
-  const affectedDoc = firestore.doc(resource.split('/documents/')[1]);
-
-  // Fullname already exists, so don't update again to avoid infinite loop.
-  if (firestoreReceived.value.fields.hasOwnProperty('fullname')) {
-    console.log('Fullname is already present in document.');
-     // BEGIN access a secret
- const fs = require('fs/promises');
- try {
-   const secret = await fs.readFile('/etc/secrets/api_cred/latest', { encoding: 'utf8' });
-   // use the secret. For lab testing purposes, we log the secret.
-   console.log('secret: ', secret);
- } catch (err) {
-   console.log(err);
- }
- // End access a secret
-    return;
-  }
-
-  if (firestoreReceived.value.fields.hasOwnProperty('lastname')) {
-    const lname = firestoreReceived.value.fields.lastname.stringValue;
-    const fname = firestoreReceived.value.fields.firstname.stringValue;
-    const fullname = `${fname} ${lname}`
-    console.log(`Adding fullname --> ${fullname}`);
-    await affectedDoc.update({
-     fullname: fullname
-    });
-  }
-});
-EOF_END
-
-
-deploy_function() {
-    gcloud functions deploy newCustomer \
-    --gen2 \
-    --runtime=nodejs20 \
-    --region=$REGION \
-    --trigger-location=$REGION \
-    --source=. \
-    --entry-point=newCustomer \
-    --trigger-event-filters=type=google.cloud.firestore.document.v1.created \
-    --trigger-event-filters=database='(default)' \
-    --trigger-event-filters-path-pattern=document='customers/{name}' \
-    --set-secrets '/etc/secrets/api_cred/latest=api-cred:latest'
-}
-
-
-# Variables
-SERVICE_NAME="newCustomer"
-
-# Loop until the Cloud Function is deployed
-while true; do
-  # Run the deployment command
-  deploy_function
-
-  # Check if Cloud Function is deployed
-  if gcloud functions describe $SERVICE_NAME --region $REGION &> /dev/null; then
-    echo "Cloud Function is deployed. Exiting the loop."
-    break
-  else
-    echo "Waiting for Cloud Function to be deployed..."
-    echo "Meantime Subscribe to Quicklab[https://www.youtube.com/@quick_lab]."
-    sleep 10
-  fi
-done
