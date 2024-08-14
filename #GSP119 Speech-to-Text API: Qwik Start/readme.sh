@@ -8,5 +8,5 @@ curl -LO raw.githubusercontent.com/quiccklabs/Labs_solutions/master/Google%20Clo
 
 sudo chmod +x gsp119.sh
 
-./bgsp119.sh
+./gsp119.sh
 ```
